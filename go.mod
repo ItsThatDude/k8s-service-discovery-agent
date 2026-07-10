@@ -1,4 +1,4 @@
-module k8s-sd-controller
+module k8s-sd-agent
 
 go 1.26.0
 

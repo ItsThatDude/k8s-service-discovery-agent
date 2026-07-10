@@ -34,7 +34,7 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
-          BINARY_NAME="sd-apiserver-${{ matrix.goos }}-${{ matrix.goarch }}"
+          BINARY_NAME="sd-agent-${{ matrix.goos }}-${{ matrix.goarch }}"
           # Compile stripped, optimized pure-static binary targets
           go build -ldflags="-w -s" -o "dist/${BINARY_NAME}" main.go
 
