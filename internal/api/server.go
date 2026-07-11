@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"k8s-sd-agent/internal/common"
 	"net/http"
 	"strconv"
 
@@ -20,8 +21,10 @@ type DiscoveredService struct {
 }
 
 type ApiServerSettings struct {
-	ValidPorts  []string `json:"validPorts"`
-	CheckHealth bool     `json:"checkHealth"`
+	ValidPorts     []string          `json:"validPorts"`
+	CheckHealth    bool              `json:"checkHealth"`
+	NameSourceType common.NameSource `json:"nameSourceType"`
+	NameSource     string            `json:"nameSource"`
 }
 
 type ApiServer struct {
@@ -87,8 +90,31 @@ func (s *ApiServer) handleListServices(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if len(ips) > 0 {
+			name := ""
+
+			switch s.settings.NameSourceType {
+			case common.NameSourceAnnotation:
+				annotation, exists := svc.Annotations[s.settings.NameSource]
+
+				if exists {
+					name = annotation
+				}
+			case common.NameSourceLabel:
+				label, exists := svc.Labels[s.settings.NameSource]
+
+				if exists {
+					name = label
+				}
+			case common.NameSourceName:
+				name = svc.Name
+			}
+
+			if name == "" {
+				continue
+			}
+
 			response = append(response, DiscoveredService{
-				Name:      svc.Name,
+				Name:      name,
 				Endpoints: ips,
 			})
 		}

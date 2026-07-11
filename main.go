@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"k8s-sd-agent/internal/api"
+	"k8s-sd-agent/internal/common"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -41,20 +42,27 @@ func (p *watchNamespaceFlags) Set(value string) error {
 }
 
 func main() {
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	setupLog := ctrl.Log.WithName("setup")
+
 	var watchNamespaces watchNamespaceFlags
 	var labelSelectorStr string
 	var validPorts validPortFlags
 	var checkHealth bool
+	nameSourceType := common.NameSourceName
+	var nameSource string
 	flag.Var(&watchNamespaces, "namespace", "The namespace to watch (can repeat)")
 	flag.StringVar(&labelSelectorStr, "selector", "", "Label selector string (e.g. app=frontend)")
 	flag.Var(&validPorts, "port", "Port number or port name to filter by (can repeat)")
 	flag.BoolVar(&checkHealth, "healthCheck", false, "Specify to filter out services with no endpoints")
+	flag.Var(&nameSourceType, "nameSourceType", "specify the source to use for the service name (name, annotation, label). Defaults to name")
+	flag.StringVar(&nameSource, "nameSource", "", "specify the label or annotation to use as the service name")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
-
-	setupLog := ctrl.Log.WithName("setup")
-	setupLog.Info("Logger initialized successfully!")
+	if nameSourceType != common.NameSourceName && nameSource == "" {
+		setupLog.Error(nil, "nameSource parameter must be set if nameSourceType is Annotation or Label.")
+		os.Exit(1)
+	}
 
 	scheme := runtime.NewScheme()
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -100,8 +108,10 @@ func main() {
 		ctx,
 		cluster.GetClient(),
 		api.ApiServerSettings{
-			ValidPorts:  validPorts,
-			CheckHealth: checkHealth,
+			ValidPorts:     validPorts,
+			CheckHealth:    checkHealth,
+			NameSourceType: nameSourceType,
+			NameSource:     nameSource,
 		},
 		&cacheSynced,
 	)

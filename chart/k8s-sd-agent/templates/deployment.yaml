@@ -57,6 +57,12 @@ spec:
           {{- if .Values.discovery.healthCheck }}
             - "--healthCheck"
           {{- end }}
+          {{- if has (.Values.discovery.nameSourceType | lower) (list "annotation" "label") }}
+            - "--nameSourceType"
+            - {{ .Values.discovery.nameSourceType | lower | quote }}
+            - "--nameSource"
+            - {{ .Values.discovery.nameSource | required "nameSource is required" | quote }}
+          {{- end }}
           env:
             - name: POD_NAMESPACE
               valueFrom:

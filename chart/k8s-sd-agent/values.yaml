@@ -1,10 +1,25 @@
 # Discovery related config
 discovery:
+  # Enable cluster-wide service discovery
   global: false
+
+  # Enable Namespace scoped discovery for the specified namespaces
   namespaces: []
+
+  # Specify which ports are selected for discovery. Can either be the port name, or the external port number.
   validPorts: []
+
+  # Specify the label selector used to discover services
   labelSelector: "sd.antware.xyz/discover=true"
+
+  # Enable health check to filter out services with no endpoints
   healthCheck: true
+
+  # Specify the source to use for the service name. Can be name, annotation or label
+  nameSourceType: name
+
+  # When nameSourceType is either annotation or label, specify the annotation or label key to fetch the name from
+  nameSource: "sd.antware.xyz/service-name"
 
 # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 replicaCount: 1
